@@ -34,7 +34,26 @@ export const GET = async (request: Request) => {
 
 export const POST = async (request: Request) => {
     try {
+        const { searchParams } = new URL(request.url);
+        const userId = searchParams.get('userId');
 
+        const { title } = await request.json()
+
+        if (!userId || !Types.ObjectId.isValid(userId)) {
+            return new NextResponse(JSON.stringify({ message: "Invalid or missing user id" }), { 'status': 400 })
+        }
+        await connect()
+
+        const user = await User.findById(userId)
+
+        if (!user) {
+            return new NextResponse(JSON.stringify({ message: "User not found in the database" }), { 'status': 404 })
+        }
+
+        const newCategory = new Category({ title, userId: new Types.ObjectId(userId) })
+        await newCategory.save()
+
+        return new NextResponse(JSON.stringify({ message: "New Category Created", category: newCategory }), { 'status': 200 })
     }
     catch (err: any) {
         return new NextResponse("Error creating the category" + err.message, { status: 500 })
