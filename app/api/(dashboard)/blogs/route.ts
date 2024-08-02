@@ -11,6 +11,10 @@ export const GET = async (request: Request) => {
         const { searchParams } = new URL(request.url)
         const userId = searchParams.get("userId")
         const categoryId = searchParams.get("categoryId")
+        const searchKeyword = searchParams.get("keyword") as string;
+        const startDate = searchParams.get("startDate");
+        const endDate = searchParams.get("endDate")
+
 
         if (!userId || !Types.ObjectId.isValid(userId)) {
             return new NextResponse(JSON.stringify({ message: "Invalid or missing User Id" }), {
@@ -47,6 +51,12 @@ export const GET = async (request: Request) => {
             category: new Types.ObjectId(categoryId)
         }
 
+        if (searchKeyword) {
+            filter.$or = [
+                { title: { $regex: searchKeyword, $options: 'i' } },
+                { description: { $regex: searchKeyword, $options: 'i' } }
+            ]
+        }
         const blogs = await Blog.find(filter)
 
         return new NextResponse(JSON.stringify({ blogs }), {
